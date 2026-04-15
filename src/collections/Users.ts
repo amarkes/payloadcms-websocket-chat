@@ -55,6 +55,62 @@ export const Users: CollectionConfig = {
       defaultValue: false,
       label: 'Ativar ofuscacao de mensagens',
     },
+    // ── Social profile ────────────────────────────────────────────────────────
+    {
+      name: 'username',
+      type: 'text',
+      unique: true,
+      required: true,
+      index: true,
+      admin: {
+        description: 'Handle público único (ex: @joao_silva)',
+      },
+    },
+    {
+      name: 'bio',
+      type: 'textarea',
+      admin: {
+        description: 'Descrição curta do perfil',
+      },
+    },
+    {
+      name: 'website',
+      type: 'text',
+      admin: {
+        description: 'URL do site pessoal',
+      },
+    },
+    {
+      name: 'isPrivate',
+      type: 'checkbox',
+      defaultValue: false,
+      label: 'Perfil privado',
+      admin: {
+        description: 'Se ativado, novos seguidores precisam de aprovação',
+      },
+    },
+    {
+      name: 'followersCount',
+      type: 'number',
+      defaultValue: 0,
+      admin: { readOnly: true },
+      access: { create: () => false, update: () => false },
+    },
+    {
+      name: 'followingCount',
+      type: 'number',
+      defaultValue: 0,
+      admin: { readOnly: true },
+      access: { create: () => false, update: () => false },
+    },
+    {
+      name: 'postsCount',
+      type: 'number',
+      defaultValue: 0,
+      admin: { readOnly: true },
+      access: { create: () => false, update: () => false },
+    },
+    // ── Password reset (internal) ─────────────────────────────────────────────
     {
       name: 'passwordResetCodeHash',
       type: 'text',

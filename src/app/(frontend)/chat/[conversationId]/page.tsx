@@ -17,7 +17,7 @@ export default async function ChatPage({ params }: PageProps) {
   const headers = await getHeaders()
   const { user } = await payload.auth({ headers })
 
-  if (!user) redirect('/chat')
+  if (!user) redirect('/')
 
   // Fetch conversation and verify user is a participant
   const conversation = await payload.findByID({

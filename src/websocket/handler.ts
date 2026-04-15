@@ -4,6 +4,12 @@ import { getPayload } from 'payload'
 import { CHAT_MESSAGES_PAGE_SIZE } from '../lib/chat-messages.js'
 import { getUnreadNotificationsSummaryForUserId } from '../lib/chat-notifications.js'
 import config from '../payload.config.js'
+import {
+  addUserSocket,
+  broadcastToUserSockets,
+  getUserSockets,
+  removeUserSocket,
+} from './social-events.js'
 
 interface AuthenticatedSocket extends WsSocket {
   currentConversationId?: string
@@ -41,7 +47,6 @@ type WsMessage =
 // conversationId -> set of connected sockets
 const rooms = new Map<string, Set<AuthenticatedSocket>>()
 const onlineUsers = new Map<string, number>()
-const userSockets = new Map<string, Set<AuthenticatedSocket>>()
 const conversationTypingUsers = new Map<string, Set<string>>()
 
 function broadcast(conversationId: string, data: object, exclude?: AuthenticatedSocket) {
@@ -67,38 +72,8 @@ function leaveAllRooms(socket: AuthenticatedSocket) {
   socket.currentConversationId = undefined
 }
 
-function addUserSocket(userId: string, socket: AuthenticatedSocket) {
-  if (!userSockets.has(userId)) {
-    userSockets.set(userId, new Set())
-  }
-
-  userSockets.get(userId)?.add(socket)
-}
-
-function removeUserSocket(userId: string, socket: AuthenticatedSocket) {
-  const sockets = userSockets.get(userId)
-
-  if (!sockets) return
-
-  sockets.delete(socket)
-
-  if (sockets.size === 0) {
-    userSockets.delete(userId)
-  }
-}
-
 function broadcastToUser(userId: string, data: object, exclude?: AuthenticatedSocket) {
-  const sockets = userSockets.get(userId)
-
-  if (!sockets) return
-
-  const payload = JSON.stringify(data)
-
-  for (const socket of sockets) {
-    if (socket !== exclude && socket.readyState === 1 /* OPEN */) {
-      socket.send(payload)
-    }
-  }
+  broadcastToUserSockets(userId, data, { exclude })
 }
 
 function setConversationTypingState(conversationId: string, userId: string, isTyping: boolean) {
@@ -123,19 +98,10 @@ function setConversationTypingState(conversationId: string, userId: string, isTy
 }
 
 function broadcastNotificationsToUser(userId: string, data: object, exclude?: AuthenticatedSocket) {
-  const sockets = userSockets.get(userId)
-
-  if (!sockets) return
-
-  const payload = JSON.stringify(data)
-
-  for (const socket of sockets) {
-    if (socket === exclude || socket.readyState !== 1 /* OPEN */ || !socket.notificationsSubscribed) {
-      continue
-    }
-
-    socket.send(payload)
-  }
+  broadcastToUserSockets(userId, data, {
+    exclude,
+    requireNotificationsSubscribed: true,
+  })
 }
 
 function setUserOnline(userId: string) {
@@ -400,7 +366,7 @@ async function broadcastToActiveConversationSockets(
   const payloadString = JSON.stringify(data)
 
   for (const participantId of resolvedParticipantIds) {
-    const sockets = userSockets.get(String(participantId))
+    const sockets = getUserSockets(String(participantId))
 
     if (!sockets) continue
 
@@ -499,6 +465,11 @@ export async function setupWebSocket(wss: WebSocketServer) {
   }
 
   wss.on('connection', async (ws: AuthenticatedSocket, req: IncomingMessage) => {
+    // Mark alive immediately so the heartbeat checker does not terminate this
+    // socket while authentication is still in progress (payload.auth is async).
+    ws.isAlive = true
+    ws.lastSeenAt = Date.now()
+
     // Authenticate using the Payload session cookie sent automatically by the browser
     const cookieHeader = req.headers.cookie || ''
     const originHeader = typeof req.headers.origin === 'string' ? req.headers.origin : ''

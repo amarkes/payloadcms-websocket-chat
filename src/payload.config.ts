@@ -9,6 +9,13 @@ import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Conversations } from './collections/Conversations'
 import { Messages } from './collections/Messages'
+import { Follows } from './collections/social/Follows'
+import { Posts } from './collections/social/Posts'
+import { Reactions } from './collections/social/Reactions'
+import { Comments } from './collections/social/Comments'
+import { Stories } from './collections/social/Stories'
+import { Reels } from './collections/social/Reels'
+import { startStoriesCleanupJob } from './lib/story-cleanup'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -20,7 +27,18 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Conversations, Messages],
+  collections: [
+    Users,
+    Media,
+    Conversations,
+    Messages,
+    Follows,
+    Posts,
+    Stories,
+    Reels,
+    Reactions,
+    Comments,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -32,5 +50,8 @@ export default buildConfig({
     },
   }),
   sharp,
+  onInit: async (payload) => {
+    startStoriesCleanupJob(payload)
+  },
   plugins: [],
 })

@@ -119,6 +119,7 @@ export default function ChatInterface({
   const heartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const typingSentRef = useRef(false)
   const shouldReconnectRef = useRef(true)
+  const restoreFocusOnJoinRef = useRef(false)
 
   function getMessageConversationId(message: Message | null | undefined) {
     if (!message?.conversation) return null
@@ -134,72 +135,68 @@ export default function ChatInterface({
     }
 
     return Array.from(messagesById.values()).sort(
-      (left, right) =>
-        new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+      (left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
     )
   }
 
-  const loadOlderMessages = useCallback(
-    async () => {
-      const nextPage = oldestLoadedPageRef.current + 1
+  const loadOlderMessages = useCallback(async () => {
+    const nextPage = oldestLoadedPageRef.current + 1
 
-      if (isLoadingPage || nextPage > totalPages) return
+    if (isLoadingPage || nextPage > totalPages) return
 
-      setIsLoadingPage(true)
-      setPageError('')
+    setIsLoadingPage(true)
+    setPageError('')
 
-      try {
-        const scrollContainer = messagesContainerRef.current
-        const previousScrollHeight = scrollContainer?.scrollHeight ?? 0
-        const previousScrollTop = scrollContainer?.scrollTop ?? 0
+    try {
+      const scrollContainer = messagesContainerRef.current
+      const previousScrollHeight = scrollContainer?.scrollHeight ?? 0
+      const previousScrollTop = scrollContainer?.scrollTop ?? 0
 
-        const response = await fetch(
-          `/api/chat/conversations/${conversationId}/messages?page=${nextPage}`,
-          {
-            cache: 'no-store',
-            credentials: 'same-origin',
-          },
-        )
+      const response = await fetch(
+        `/api/chat/conversations/${conversationId}/messages?page=${nextPage}`,
+        {
+          cache: 'no-store',
+          credentials: 'same-origin',
+        },
+      )
 
-        const data = (await response.json()) as {
-          docs?: Message[]
-          message?: string
-          page?: number
-          totalDocs?: number
-          totalPages?: number
-        }
-
-        if (!response.ok || !Array.isArray(data.docs)) {
-          throw new Error(data.message || 'Nao foi possivel carregar as mensagens.')
-        }
-
-        const resolvedPage = Number(data.page) || nextPage
-        const nextPageMessages = data.docs as Message[]
-
-        oldestLoadedPageRef.current = resolvedPage
-        setOldestLoadedPage(resolvedPage)
-        totalMessagesRef.current = Number(data.totalDocs) || 0
-        setTotalMessages(totalMessagesRef.current)
-        setTotalPages(Number(data.totalPages) || 1)
-        shouldAutoScrollRef.current = false
-        setMessages((prev) => mergeMessagesById([...nextPageMessages, ...prev]))
-
-        window.requestAnimationFrame(() => {
-          if (!scrollContainer) return
-
-          const nextScrollHeight = scrollContainer.scrollHeight
-          scrollContainer.scrollTop = nextScrollHeight - previousScrollHeight + previousScrollTop
-        })
-      } catch (error) {
-        setPageError(
-          error instanceof Error ? error.message : 'Nao foi possivel carregar as mensagens.',
-        )
-      } finally {
-        setIsLoadingPage(false)
+      const data = (await response.json()) as {
+        docs?: Message[]
+        message?: string
+        page?: number
+        totalDocs?: number
+        totalPages?: number
       }
-    },
-    [conversationId, isLoadingPage, totalPages],
-  )
+
+      if (!response.ok || !Array.isArray(data.docs)) {
+        throw new Error(data.message || 'Nao foi possivel carregar as mensagens.')
+      }
+
+      const resolvedPage = Number(data.page) || nextPage
+      const nextPageMessages = data.docs as Message[]
+
+      oldestLoadedPageRef.current = resolvedPage
+      setOldestLoadedPage(resolvedPage)
+      totalMessagesRef.current = Number(data.totalDocs) || 0
+      setTotalMessages(totalMessagesRef.current)
+      setTotalPages(Number(data.totalPages) || 1)
+      shouldAutoScrollRef.current = false
+      setMessages((prev) => mergeMessagesById([...nextPageMessages, ...prev]))
+
+      window.requestAnimationFrame(() => {
+        if (!scrollContainer) return
+
+        const nextScrollHeight = scrollContainer.scrollHeight
+        scrollContainer.scrollTop = nextScrollHeight - previousScrollHeight + previousScrollTop
+      })
+    } catch (error) {
+      setPageError(
+        error instanceof Error ? error.message : 'Nao foi possivel carregar as mensagens.',
+      )
+    } finally {
+      setIsLoadingPage(false)
+    }
+  }, [conversationId, isLoadingPage, totalPages])
 
   const sendTypingState = useCallback(
     (isTyping: boolean) => {
@@ -403,6 +400,7 @@ export default function ChatInterface({
     ws.onclose = (event) => {
       const shouldReconnect = shouldReconnectRef.current && event.code !== 1008
 
+      restoreFocusOnJoinRef.current = document.activeElement === textareaRef.current
       isJoinedRef.current = false
       setIsJoined(false)
       setIsOtherUserTyping(false)
@@ -489,6 +487,14 @@ export default function ChatInterface({
     if (!isJoined) return
 
     void markConversationAsRead()
+  }, [isJoined])
+
+  useEffect(() => {
+    if (!isJoined) return
+    if (!restoreFocusOnJoinRef.current) return
+
+    restoreFocusOnJoinRef.current = false
+    textareaRef.current?.focus()
   }, [isJoined])
 
   useEffect(() => {
@@ -834,7 +840,7 @@ export default function ChatInterface({
           </div>
         </div>
         <a
-          href="/chat"
+          href="/"
           style={{ marginLeft: 'auto', fontSize: 13, color: '#0070f3', textDecoration: 'none' }}
         >
           ← Voltar
@@ -995,8 +1001,7 @@ export default function ChatInterface({
                     >
                       <span
                         style={{
-                          filter:
-                            isContentObfuscated && !isContentRevealed ? 'blur(8px)' : 'none',
+                          filter: isContentObfuscated && !isContentRevealed ? 'blur(8px)' : 'none',
                           transition: 'filter 120ms ease',
                         }}
                       >
@@ -1324,7 +1329,6 @@ export default function ChatInterface({
               data-chat-emoji-toggle
               onPointerDown={(event) => event.stopPropagation()}
               onClick={() => setIsEmojiPickerOpen((current) => !current)}
-              disabled={isComposerDisabled}
               style={{
                 width: 44,
                 height: 44,
@@ -1332,8 +1336,7 @@ export default function ChatInterface({
                 border: '1px solid #2d3748',
                 background: '#0f1724',
                 color: '#f5f7fb',
-                cursor: isComposerDisabled ? 'not-allowed' : 'pointer',
-                opacity: isComposerDisabled ? 0.5 : 1,
+                cursor: 'pointer',
                 fontSize: 20,
                 flexShrink: 0,
               }}
@@ -1352,10 +1355,11 @@ export default function ChatInterface({
             placeholder={
               editingMessageId
                 ? 'Edite a mensagem... (Enter para salvar)'
-                : 'Digite uma mensagem... (Enter para enviar)'
+                : isComposerDisabled
+                  ? 'Conectando...'
+                  : 'Digite uma mensagem... (Enter para enviar)'
             }
             rows={1}
-            disabled={isComposerDisabled}
             style={{
               flex: 1,
               minWidth: 0,

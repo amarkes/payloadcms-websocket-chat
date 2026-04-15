@@ -70,7 +70,9 @@ export default function AccountForm({
       setForm((current) => ({ ...current, password: '' }))
       router.refresh()
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Nao foi possivel atualizar a conta.')
+      setError(
+        submitError instanceof Error ? submitError.message : 'Nao foi possivel atualizar a conta.',
+      )
     } finally {
       setLoading(false)
     }
@@ -127,14 +129,22 @@ export default function AccountForm({
           boxShadow: '0 24px 80px rgba(0, 0, 0, 0.45)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 20 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
           <div>
             <h1 style={{ margin: 0, fontSize: 28 }}>Sua conta</h1>
             <p style={{ margin: '8px 0 0', color: '#94a3b8' }}>
               Atualize seus dados e, se quiser, defina uma nova senha.
             </p>
           </div>
-          <Link href="/chat" style={{ color: '#93c5fd', textDecoration: 'none', fontSize: 14 }}>
+          <Link href="/" style={{ color: '#93c5fd', textDecoration: 'none', fontSize: 14 }}>
             ← Voltar
           </Link>
         </div>
@@ -229,7 +239,9 @@ export default function AccountForm({
             placeholder="Seu e-mail"
             style={inputStyle}
           />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
+          <div
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}
+          >
             <select
               value={form.sex}
               onChange={(event) => setForm((current) => ({ ...current, sex: event.target.value }))}
@@ -252,7 +264,9 @@ export default function AccountForm({
           <input
             type="password"
             value={form.password}
-            onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, password: event.target.value }))
+            }
             placeholder="Nova senha (opcional)"
             style={inputStyle}
           />

@@ -23,7 +23,7 @@ export default function ChatAuthScreen() {
   const [requestState, setRequestState] = useState<RequestState>(initialRequestState)
   const [resetStep, setResetStep] = useState<'request' | 'confirm'>('request')
   const [loginForm, setLoginForm] = useState({ email: '', password: '' })
-  const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '' })
+  const [registerForm, setRegisterForm] = useState({ name: '', username: '', email: '', password: '' })
   const [resetForm, setResetForm] = useState({ email: '', code: '', password: '' })
 
   async function submitJson(url: string, body: Record<string, string>) {
@@ -268,6 +268,15 @@ export default function ChatAuthScreen() {
               value={registerForm.name}
               onChange={(event) =>
                 setRegisterForm((current) => ({ ...current, name: event.target.value }))
+              }
+              style={inputStyle}
+            />
+            <input
+              type="text"
+              placeholder="Nome de usuário (ex: joao_silva)"
+              value={registerForm.username}
+              onChange={(event) =>
+                setRegisterForm((current) => ({ ...current, username: event.target.value }))
               }
               style={inputStyle}
             />

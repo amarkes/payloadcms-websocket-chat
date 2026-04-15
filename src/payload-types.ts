@@ -71,6 +71,12 @@ export interface Config {
     media: Media;
     conversations: Conversation;
     messages: Message;
+    follows: Follow;
+    posts: Post;
+    stories: Story;
+    reels: Reel;
+    reactions: Reaction;
+    comments: Comment;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -82,6 +88,12 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
     messages: MessagesSelect<false> | MessagesSelect<true>;
+    follows: FollowsSelect<false> | FollowsSelect<true>;
+    posts: PostsSelect<false> | PostsSelect<true>;
+    stories: StoriesSelect<false> | StoriesSelect<true>;
+    reels: ReelsSelect<false> | ReelsSelect<true>;
+    reactions: ReactionsSelect<false> | ReactionsSelect<true>;
+    comments: CommentsSelect<false> | CommentsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -131,6 +143,26 @@ export interface User {
   avatar?: (number | null) | Media;
   sex?: ('male' | 'female' | 'prefer_not_to_say') | null;
   birthDate?: string | null;
+  enableMessageObfuscation?: boolean | null;
+  /**
+   * Handle público único (ex: @joao_silva)
+   */
+  username: string;
+  /**
+   * Descrição curta do perfil
+   */
+  bio?: string | null;
+  /**
+   * URL do site pessoal
+   */
+  website?: string | null;
+  /**
+   * Se ativado, novos seguidores precisam de aprovação
+   */
+  isPrivate?: boolean | null;
+  followersCount?: number | null;
+  followingCount?: number | null;
+  postsCount?: number | null;
   passwordResetCodeHash?: string | null;
   passwordResetCodeExpiresAt?: string | null;
   updatedAt: string;
@@ -215,6 +247,117 @@ export interface Message {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "follows".
+ */
+export interface Follow {
+  id: number;
+  follower: number | User;
+  following: number | User;
+  status: 'pending' | 'accepted';
+  followKey?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  author: number | User;
+  caption?: string | null;
+  media?:
+    | {
+        file: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Extraído automaticamente do caption via hashtags
+   */
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  visibility: 'public' | 'followers' | 'private';
+  isArchived?: boolean | null;
+  likesCount?: number | null;
+  dislikesCount?: number | null;
+  commentsCount?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stories".
+ */
+export interface Story {
+  id: number;
+  author: number | User;
+  media: number | Media;
+  caption?: string | null;
+  expiresAt: string;
+  viewedBy?: (number | User)[] | null;
+  viewsCount?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reels".
+ */
+export interface Reel {
+  id: number;
+  author: number | User;
+  video: number | Media;
+  thumbnail?: (number | null) | Media;
+  caption?: string | null;
+  duration?: number | null;
+  visibility: 'public' | 'followers' | 'private';
+  likesCount?: number | null;
+  dislikesCount?: number | null;
+  commentsCount?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reactions".
+ */
+export interface Reaction {
+  id: number;
+  user: number | User;
+  type: 'like' | 'dislike';
+  targetType: 'post' | 'reel' | 'comment';
+  targetId: string;
+  reactionKey?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "comments".
+ */
+export interface Comment {
+  id: number;
+  author: number | User;
+  targetType: 'post' | 'reel';
+  targetId: string;
+  parent?: (number | null) | Comment;
+  content: string;
+  likesCount?: number | null;
+  dislikesCount?: number | null;
+  /**
+   * Soft delete — preserva respostas filhas
+   */
+  isDeleted?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -252,6 +395,30 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'messages';
         value: number | Message;
+      } | null)
+    | ({
+        relationTo: 'follows';
+        value: number | Follow;
+      } | null)
+    | ({
+        relationTo: 'posts';
+        value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'stories';
+        value: number | Story;
+      } | null)
+    | ({
+        relationTo: 'reels';
+        value: number | Reel;
+      } | null)
+    | ({
+        relationTo: 'reactions';
+        value: number | Reaction;
+      } | null)
+    | ({
+        relationTo: 'comments';
+        value: number | Comment;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -304,6 +471,14 @@ export interface UsersSelect<T extends boolean = true> {
   avatar?: T;
   sex?: T;
   birthDate?: T;
+  enableMessageObfuscation?: T;
+  username?: T;
+  bio?: T;
+  website?: T;
+  isPrivate?: T;
+  followersCount?: T;
+  followingCount?: T;
+  postsCount?: T;
   passwordResetCodeHash?: T;
   passwordResetCodeExpiresAt?: T;
   updatedAt?: T;
@@ -372,6 +547,105 @@ export interface MessagesSelect<T extends boolean = true> {
         users?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "follows_select".
+ */
+export interface FollowsSelect<T extends boolean = true> {
+  follower?: T;
+  following?: T;
+  status?: T;
+  followKey?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts_select".
+ */
+export interface PostsSelect<T extends boolean = true> {
+  author?: T;
+  caption?: T;
+  media?:
+    | T
+    | {
+        file?: T;
+        id?: T;
+      };
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  visibility?: T;
+  isArchived?: T;
+  likesCount?: T;
+  dislikesCount?: T;
+  commentsCount?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stories_select".
+ */
+export interface StoriesSelect<T extends boolean = true> {
+  author?: T;
+  media?: T;
+  caption?: T;
+  expiresAt?: T;
+  viewedBy?: T;
+  viewsCount?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reels_select".
+ */
+export interface ReelsSelect<T extends boolean = true> {
+  author?: T;
+  video?: T;
+  thumbnail?: T;
+  caption?: T;
+  duration?: T;
+  visibility?: T;
+  likesCount?: T;
+  dislikesCount?: T;
+  commentsCount?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reactions_select".
+ */
+export interface ReactionsSelect<T extends boolean = true> {
+  user?: T;
+  type?: T;
+  targetType?: T;
+  targetId?: T;
+  reactionKey?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "comments_select".
+ */
+export interface CommentsSelect<T extends boolean = true> {
+  author?: T;
+  targetType?: T;
+  targetId?: T;
+  parent?: T;
+  content?: T;
+  likesCount?: T;
+  dislikesCount?: T;
+  isDeleted?: T;
   updatedAt?: T;
   createdAt?: T;
 }

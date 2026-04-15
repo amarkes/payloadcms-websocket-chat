@@ -7,15 +7,17 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       email?: string
       name?: string
+      username?: string
       password?: string
     }
 
     const name = body.name?.trim()
+    const username = body.username?.trim()
     const email = body.email?.trim().toLowerCase()
     const password = body.password?.trim()
 
-    if (!name || !email || !password) {
-      return NextResponse.json({ message: 'Preencha nome, e-mail e senha.' }, { status: 400 })
+    if (!name || !username || !email || !password) {
+      return NextResponse.json({ message: 'Preencha nome, usuário, e-mail e senha.' }, { status: 400 })
     }
 
     if (password.length < 8) {
@@ -28,6 +30,7 @@ export async function POST(request: Request) {
       collection: 'users',
       data: {
         name,
+        username,
         email,
         password,
       },

@@ -29,7 +29,11 @@ function matchesParticipantPair(participants: unknown, userA: number, userB: num
     .filter((participantId) => Number.isFinite(participantId))
     .sort((a, b) => a - b)
 
-  return normalizedParticipants.length === 2 && normalizedParticipants[0] === Math.min(userA, userB) && normalizedParticipants[1] === Math.max(userA, userB)
+  return (
+    normalizedParticipants.length === 2 &&
+    normalizedParticipants[0] === Math.min(userA, userB) &&
+    normalizedParticipants[1] === Math.max(userA, userB)
+  )
 }
 
 async function startConversation(formData: FormData) {
@@ -136,24 +140,25 @@ export default async function NewConversationPage({ searchParams }: PageProps) {
 
   const result = await payload.find({
     collection: 'users',
-    where: query.length >= 2
-      ? {
-          and: [
-            {
-              or: [{ name: { contains: query } }, { email: { contains: query } }],
-            },
-            {
-              id: {
-                not_equals: user.id,
+    where:
+      query.length >= 2
+        ? {
+            and: [
+              {
+                or: [{ name: { contains: query } }, { email: { contains: query } }],
               },
+              {
+                id: {
+                  not_equals: user.id,
+                },
+              },
+            ],
+          }
+        : {
+            id: {
+              not_equals: user.id,
             },
-          ],
-        }
-      : {
-          id: {
-            not_equals: user.id,
           },
-        },
     sort: 'name',
     depth: 1,
     limit: query.length >= 2 ? 12 : 24,
@@ -185,7 +190,7 @@ export default async function NewConversationPage({ searchParams }: PageProps) {
       >
         <h1 style={{ margin: 0 }}>Nova conversa</h1>
         <Link
-          href="/chat"
+          href="/"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
