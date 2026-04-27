@@ -34,36 +34,42 @@ export const Reactions: CollectionConfig = {
         if (!collection) return
 
         if (operation === 'create') {
-          const field = doc.type === 'like' ? 'likesCount' : 'dislikesCount'
-          await adjustCount(
-            req.payload,
-            collection as Parameters<typeof adjustCount>[1],
-            doc.targetId,
-            field,
-            1,
-            req,
-          )
+          if (doc.type === 'like' || doc.type === 'dislike') {
+            const field = doc.type === 'like' ? 'likesCount' : 'dislikesCount'
+            await adjustCount(
+              req.payload,
+              collection as Parameters<typeof adjustCount>[1],
+              doc.targetId,
+              field,
+              1,
+              req,
+            )
+          }
         }
 
         if (operation === 'update' && previousDoc?.type !== doc.type) {
-          const oldField = previousDoc.type === 'like' ? 'likesCount' : 'dislikesCount'
-          const newField = doc.type === 'like' ? 'likesCount' : 'dislikesCount'
-          await adjustCount(
-            req.payload,
-            collection as Parameters<typeof adjustCount>[1],
-            doc.targetId,
-            oldField,
-            -1,
-            req,
-          )
-          await adjustCount(
-            req.payload,
-            collection as Parameters<typeof adjustCount>[1],
-            doc.targetId,
-            newField,
-            1,
-            req,
-          )
+          if (previousDoc.type === 'like' || previousDoc.type === 'dislike') {
+            const oldField = previousDoc.type === 'like' ? 'likesCount' : 'dislikesCount'
+            await adjustCount(
+              req.payload,
+              collection as Parameters<typeof adjustCount>[1],
+              doc.targetId,
+              oldField,
+              -1,
+              req,
+            )
+          }
+          if (doc.type === 'like' || doc.type === 'dislike') {
+            const newField = doc.type === 'like' ? 'likesCount' : 'dislikesCount'
+            await adjustCount(
+              req.payload,
+              collection as Parameters<typeof adjustCount>[1],
+              doc.targetId,
+              newField,
+              1,
+              req,
+            )
+          }
         }
 
         const counts = await getReactionCountsForTarget(
@@ -86,15 +92,17 @@ export const Reactions: CollectionConfig = {
         const collection = targetCollectionMap[doc.targetType as ReactionTargetType]
         if (!collection) return
 
-        const field = doc.type === 'like' ? 'likesCount' : 'dislikesCount'
-        await adjustCount(
-          req.payload,
-          collection as Parameters<typeof adjustCount>[1],
-          doc.targetId,
-          field,
-          -1,
-          req,
-        )
+        if (doc.type === 'like' || doc.type === 'dislike') {
+          const field = doc.type === 'like' ? 'likesCount' : 'dislikesCount'
+          await adjustCount(
+            req.payload,
+            collection as Parameters<typeof adjustCount>[1],
+            doc.targetId,
+            field,
+            -1,
+            req,
+          )
+        }
 
         const counts = await getReactionCountsForTarget(
           req.payload,
@@ -139,7 +147,16 @@ export const Reactions: CollectionConfig = {
       options: [
         { label: 'Like', value: 'like' },
         { label: 'Dislike', value: 'dislike' },
+        { label: 'Emoji', value: 'emoji' },
       ],
+    },
+    {
+      name: 'emoji',
+      type: 'text',
+      maxLength: 16,
+      admin: {
+        condition: (_, siblingData) => siblingData.type === 'emoji',
+      },
     },
     {
       name: 'targetType',

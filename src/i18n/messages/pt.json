@@ -1,0 +1,146 @@
+{
+  "nav": {
+    "feed": "Feed",
+    "explore": "Explorar",
+    "reels": "Reels",
+    "messages": "Mensagens",
+    "profile": "Perfil",
+    "settings": "Configurações"
+  },
+  "topbar": {
+    "newPost": "Novo post",
+    "notifications": "Notificações",
+    "searchPlaceholder": "Buscar..."
+  },
+  "composer": {
+    "placeholder": "Compartilhe seu flow...",
+    "post": "Postar",
+    "addImage": "Imagem",
+    "addVideo": "Vídeo",
+    "addEmoji": "Emoji",
+    "addGif": "GIF",
+    "posting": "Postando...",
+    "errorEmpty": "Adicione uma legenda ou mídia.",
+    "visibility": {
+      "public": "Público",
+      "followers": "Seguidores",
+      "private": "Privado"
+    }
+  },
+  "trending": {
+    "title": "Trending Topics",
+    "showMore": "Ver mais",
+    "vibes": "Vibes"
+  },
+  "whoToFollow": {
+    "title": "Quem seguir",
+    "follow": "Seguir",
+    "following": "Seguindo"
+  },
+  "feed": {
+    "emptyTitle": "Seu feed está vazio",
+    "emptyDescription": "Siga pessoas para ver posts aqui.",
+    "explore": "Explorar posts",
+    "stories": "Stories ativas"
+  },
+  "post": {
+    "like": "Curtir",
+    "dislike": "Não curtir",
+    "comment": "Comentar",
+    "share": "Compartilhar",
+    "save": "Salvar",
+    "edit": "Editar",
+    "delete": "Remover",
+    "options": "Opções",
+    "saving": "Salvando...",
+    "deleting": "Removendo...",
+    "confirmDelete": "Remover este post?",
+    "cancel": "Cancelar",
+    "errorSave": "Erro ao salvar.",
+    "errorDelete": "Erro ao remover."
+  },
+  "settings": {
+    "title": "Configurações",
+    "subtitle": "Personalize sua experiência no VibeStream e gerencie sua segurança.",
+    "account": {
+      "title": "Conta",
+      "profileIdentity": "Identidade do Perfil",
+      "profileIdentitySub": "Edite seu nome, bio e visual",
+      "emailPhone": "Email & Telefone"
+    },
+    "privacy": {
+      "title": "Privacidade",
+      "incognito": "Modo Incógnito",
+      "incognitoSub": "Oculte sua atividade de amigos e seguidores",
+      "interactionLimits": "Limites de Interação",
+      "interactionLimitsSub": "Permitir comentários apenas de seguidores"
+    },
+    "security": {
+      "title": "Segurança",
+      "password": "Senha",
+      "passwordSub": "Alterada há 2 meses",
+      "twoFactor": "Dois Fatores",
+      "twoFactorStatus": "Status: Ativo"
+    },
+    "notifications": {
+      "title": "Notificações",
+      "push": "Notificações Push",
+      "streamAlerts": "Alertas de Stream",
+      "directMessages": "Mensagens Diretas"
+    },
+    "help": {
+      "title": "Ajuda & Suporte",
+      "communityGuidelines": "Diretrizes da Comunidade",
+      "reportBug": "Reportar um Bug",
+      "contactSupport": "Contato com Suporte"
+    }
+  },
+  "explore": {
+    "title": "Explorar",
+    "subtitle": "Descubra o que está em alta no VibeStream",
+    "trendingCategories": "Categorias em Alta",
+    "viewAll": "Ver tudo",
+    "forYou": "Para Você",
+    "searchPlaceholder": "Buscar hashtag, ex: design",
+    "search": "Buscar",
+    "resultsFor": "Resultados para",
+    "activeVibes": "vibes ativas",
+    "dailyCreators": "criadores diários",
+    "newInnovations": "novas inovações"
+  },
+  "reels": {
+    "title": "Reels",
+    "subtitle": "Vídeos curtos com reações em tempo real",
+    "empty": "Nenhum reel disponível agora.",
+    "follow": "Seguir",
+    "share": "Compartilhar",
+    "navigatePrev": "Anterior",
+    "navigateNext": "Próximo"
+  },
+  "profile": {
+    "posts": "Posts",
+    "reels": "Reels",
+    "tagged": "Marcados",
+    "followers": "Seguidores",
+    "following": "Seguindo",
+    "editProfile": "Editar perfil",
+    "follow": "Seguir",
+    "message": "Mensagem",
+    "privateAccount": "Conta privada",
+    "privateAccountSub": "Siga este usuário para ver o conteúdo.",
+    "noPostsYet": "Nenhum post ainda.",
+    "noReelsYet": "Nenhum reel publicado ainda.",
+    "viewAll": "Ver todos",
+    "stories": "Stories ativas",
+    "joinedAt": "Entrou em"
+  },
+  "messages": {
+    "title": "Chats",
+    "newConversation": "Nova conversa",
+    "searchPlaceholder": "Buscar conversas...",
+    "selectConversation": "Selecione uma conversa",
+    "selectConversationSub": "Escolha uma conversa à esquerda para começar a trocar mensagens.",
+    "online": "Online",
+    "yesterday": "Ontem"
+  }
+}

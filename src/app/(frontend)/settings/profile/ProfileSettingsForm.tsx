@@ -6,10 +6,14 @@ import { useRef, useState } from 'react'
 
 interface ProfileSettingsFormProps {
   initialName: string
+  initialEmail: string
   initialUsername: string
   initialBio: string
   initialWebsite: string
   initialIsPrivate: boolean
+  initialSex: string
+  initialBirthDate: string
+  initialEnableMessageObfuscation: boolean
   initialAvatarUrl: string | null
 }
 
@@ -36,20 +40,33 @@ const textareaStyle: React.CSSProperties = {
 
 export default function ProfileSettingsForm({
   initialName,
+  initialEmail,
   initialUsername,
   initialBio,
   initialWebsite,
   initialIsPrivate,
+  initialSex,
+  initialBirthDate,
+  initialEnableMessageObfuscation,
   initialAvatarUrl,
 }: ProfileSettingsFormProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const nameParts = initialName.trim().split(/\s+/)
+  const initialFirstName = nameParts[0] ?? ''
+  const initialLastName = nameParts.slice(1).join(' ')
   const [form, setForm] = useState({
-    name: initialName,
+    firstName: initialFirstName,
+    lastName: initialLastName,
+    email: initialEmail,
     username: initialUsername,
     bio: initialBio,
     website: initialWebsite,
     isPrivate: initialIsPrivate,
+    sex: initialSex,
+    birthDate: initialBirthDate ? initialBirthDate.slice(0, 10) : '',
+    enableMessageObfuscation: initialEnableMessageObfuscation,
+    password: '',
   })
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(initialAvatarUrl)
@@ -72,11 +89,16 @@ export default function ProfileSettingsForm({
 
     try {
       const fd = new FormData()
-      fd.set('name', form.name)
+      fd.set('name', `${form.firstName} ${form.lastName}`.trim())
+      fd.set('email', form.email)
       fd.set('username', form.username)
       fd.set('bio', form.bio)
       fd.set('website', form.website)
       fd.set('isPrivate', String(form.isPrivate))
+      fd.set('sex', form.sex)
+      fd.set('birthDate', form.birthDate)
+      fd.set('enableMessageObfuscation', String(form.enableMessageObfuscation))
+      if (form.password) fd.set('password', form.password)
       if (avatarFile) fd.set('avatar', avatarFile)
 
       const res = await fetch('/api/social/profile', {
@@ -99,7 +121,7 @@ export default function ProfileSettingsForm({
     }
   }
 
-  const displayName = form.name || initialName
+  const displayName = `${form.firstName} ${form.lastName}`.trim() || initialName
 
   return (
     <div
@@ -207,15 +229,40 @@ export default function ProfileSettingsForm({
           />
         </div>
 
-        {/* Name */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#94a3b8' }}>
+              Nome
+            </label>
+            <input
+              type="text"
+              value={form.firstName}
+              onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+              required
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#94a3b8' }}>
+              Sobrenome
+            </label>
+            <input
+              type="text"
+              value={form.lastName}
+              onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
         <div>
           <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#94a3b8' }}>
-            Nome
+            Email
           </label>
           <input
-            type="text"
-            value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             required
             style={inputStyle}
           />
@@ -255,7 +302,7 @@ export default function ProfileSettingsForm({
         {/* Website */}
         <div>
           <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#94a3b8' }}>
-            Site
+            Website
           </label>
           <input
             type="text"
@@ -264,6 +311,51 @@ export default function ProfileSettingsForm({
             placeholder="https://seusite.com"
             style={inputStyle}
           />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#94a3b8' }}>
+              Sexo
+            </label>
+            <select
+              value={form.sex}
+              onChange={(e) => setForm((f) => ({ ...f, sex: e.target.value }))}
+              style={inputStyle}
+            >
+              <option value="">Nao informar</option>
+              <option value="male">Masculino</option>
+              <option value="female">Feminino</option>
+              <option value="prefer_not_to_say">Prefiro nao informar</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#94a3b8' }}>
+              Data de nascimento
+            </label>
+            <input
+              type="date"
+              value={form.birthDate}
+              onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value }))}
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#94a3b8' }}>
+            Nova senha
+          </label>
+          <input
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+            placeholder="Deixe em branco para manter a senha atual"
+            style={inputStyle}
+          />
+          <p style={{ color: '#475569', fontSize: 11, margin: '4px 0 0' }}>
+            Minimo de 8 caracteres.
+          </p>
         </div>
 
         {/* Private */}
@@ -286,6 +378,31 @@ export default function ProfileSettingsForm({
             <div style={{ fontSize: 14, fontWeight: 600 }}>Perfil privado</div>
             <div style={{ fontSize: 12, color: '#64748b' }}>
               Novos seguidores precisam de aprovacao.
+            </div>
+          </div>
+        </label>
+
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            cursor: 'pointer',
+            userSelect: 'none',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={form.enableMessageObfuscation}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, enableMessageObfuscation: e.target.checked }))
+            }
+            style={{ width: 18, height: 18, accentColor: '#0070f3' }}
+          />
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>Ofuscar mensagens</div>
+            <div style={{ fontSize: 12, color: '#64748b' }}>
+              Ativa a ofuscacao de mensagens quando disponivel.
             </div>
           </div>
         </label>

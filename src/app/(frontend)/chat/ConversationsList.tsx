@@ -38,8 +38,10 @@ function normalizeItems(items: Array<Omit<ConversationListItem, 'isTyping'> & { 
 
 export default function ConversationsList({
   initialItems,
+  activeConversationId,
 }: {
   initialItems: Array<Omit<ConversationListItem, 'isTyping'> & { isTyping?: boolean }>
+  activeConversationId?: string
 }) {
   const [items, setItems] = useState<ConversationListItem[]>(sortItems(normalizeItems(initialItems)))
   const wsRef = useRef<WebSocket | null>(null)
@@ -201,141 +203,63 @@ export default function ConversationsList({
   }, [])
 
   if (items.length === 0) {
-    return <p style={{ color: '#94a3b8' }}>Nenhuma conversa ainda. Inicie uma nova conversa.</p>
+    return (
+      <p className="text-neutral-500 text-sm px-4 py-6 text-center">
+        Nenhuma conversa ainda.
+      </p>
+    )
   }
 
   return (
-    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {items.map((item) => (
-        <li key={item.conversationId}>
-          <Link
-            href={item.href}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: 12,
-              border: '1px solid #2d3748',
-              borderRadius: 16,
-              textDecoration: 'none',
-              color: '#f5f7fb',
-              background: '#121826',
-              boxShadow: '0 12px 30px rgba(0, 0, 0, 0.18)',
-            }}
-          >
-            {item.avatarUrl ? (
-              <div
-                style={{
-                  position: 'relative',
-                  width: 48,
-                  height: 48,
-                  minWidth: 48,
-                  minHeight: 48,
-                  aspectRatio: '1 / 1',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  flexShrink: 0,
-                }}
-              >
-                <Image
-                  src={item.avatarUrl}
-                  alt={item.name}
-                  fill
-                  sizes="48px"
-                  style={{ objectFit: 'cover' }}
-                />
-              </div>
-            ) : (
-              <div
-                style={{
-                  width: 48,
-                  height: 48,
-                  minWidth: 48,
-                  minHeight: 48,
-                  aspectRatio: '1 / 1',
-                  borderRadius: '50%',
-                  background: '#0070f3',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontWeight: 700,
-                  fontSize: 20,
-                  flexShrink: 0,
-                }}
-              >
-                {item.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  minWidth: 0,
-                }}
-              >
-                <div
-                  style={{
-                    fontWeight: 600,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    minWidth: 0,
-                  }}
-                >
-                  {item.name}
+    <ul className="flex flex-col divide-y divide-neutral-300/10">
+      {items.map((item) => {
+        const isActive = activeConversationId === item.conversationId
+        return (
+          <li key={item.conversationId}>
+            <Link
+              href={item.href}
+              className={[
+                'flex items-center gap-3 px-4 py-3 transition-colors',
+                isActive ? 'bg-primary/10' : 'hover:bg-neutral-300/20',
+              ].join(' ')}
+            >
+              {item.avatarUrl ? (
+                <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-neutral-300/20">
+                  <Image src={item.avatarUrl} alt={item.name} fill sizes="40px" className="object-cover" />
                 </div>
-                {item.unreadCount > 0 && (
-                  <span
-                    style={{
-                      minWidth: 22,
-                      height: 22,
-                      padding: '0 7px',
-                      borderRadius: 999,
-                      background: '#2563eb',
-                      color: '#fff',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                    aria-label={`${item.unreadCount} mensagens nao lidas`}
-                    title={`${item.unreadCount} mensagens nao lidas`}
-                  >
-                    {item.unreadCount}
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-tertiary/50 border border-neutral-300/20 flex items-center justify-center text-neutral-900 font-bold text-sm shrink-0">
+                  {item.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className={['text-sm font-semibold truncate', isActive ? 'text-primary' : 'text-neutral-800'].join(' ')}>
+                    {item.name}
                   </span>
-                )}
+                  {item.unreadCount > 0 && (
+                    <span className="min-w-4.5 h-4.5 px-1 rounded-full bg-primary text-neutral text-[10px] font-bold flex items-center justify-center shrink-0">
+                      {item.unreadCount}
+                    </span>
+                  )}
+                </div>
+                <p className={['text-xs truncate', item.isTyping ? 'text-primary' : 'text-neutral-500'].join(' ')}>
+                  {item.isTyping
+                    ? 'Digitando...'
+                    : item.lastMessageAt
+                      ? new Date(item.lastMessageAt).toLocaleString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : 'Sem mensagens ainda'}
+                </p>
               </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  color: item.isTyping ? '#60a5fa' : '#9aa4b2',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {item.isTyping
-                  ? 'Digitando...'
-                  : item.unreadCount > 0
-                  ? formatUnreadLabel(item.unreadCount)
-                  : item.lastMessageAt
-                    ? new Date(item.lastMessageAt).toLocaleString('pt-BR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : 'Sem mensagens ainda'}
-              </div>
-            </div>
-          </Link>
-        </li>
-      ))}
+            </Link>
+          </li>
+        )
+      })}
     </ul>
   )
 }

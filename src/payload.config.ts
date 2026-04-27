@@ -13,6 +13,7 @@ import { Follows } from './collections/social/Follows'
 import { Posts } from './collections/social/Posts'
 import { Reactions } from './collections/social/Reactions'
 import { Comments } from './collections/social/Comments'
+import { Notifications } from './collections/social/Notifications'
 import { Stories } from './collections/social/Stories'
 import { Reels } from './collections/social/Reels'
 import { startStoriesCleanupJob } from './lib/story-cleanup'
@@ -38,6 +39,7 @@ export default buildConfig({
     Reels,
     Reactions,
     Comments,
+    Notifications,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

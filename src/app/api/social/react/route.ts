@@ -4,19 +4,21 @@
 
 import { NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/chat-auth'
+import { enrichPostsWithSocialDetails } from '@/lib/social-feed'
 
-type ReactionType = 'like' | 'dislike'
+type ReactionType = 'like' | 'dislike' | 'emoji'
 type TargetType = 'post' | 'reel' | 'comment'
 
 interface ReactBody {
   targetType: TargetType
   targetId: string
   type: ReactionType
+  emoji?: string
 }
 
 /**
  * POST /api/social/react
- * Body: { targetType: 'post'|'reel'|'comment', targetId: string, type: 'like'|'dislike' }
+ * Body: { targetType: 'post'|'reel'|'comment', targetId: string, type: 'like'|'dislike'|'emoji', emoji? }
  *
  * Toggle / switch reaction:
  *  - No existing reaction → create it   → { action: 'added',   type }
@@ -29,6 +31,7 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ message: 'Nao autenticado.' }, { status: 401 })
   }
+  const authenticatedUser = user
 
   let body: Partial<ReactBody>
   try {
@@ -38,6 +41,7 @@ export async function POST(request: Request) {
   }
 
   const { targetType, targetId, type } = body
+  const emoji = typeof body.emoji === 'string' ? body.emoji.trim() : ''
 
   if (!targetType || !targetId || !type) {
     return NextResponse.json(
@@ -47,7 +51,7 @@ export async function POST(request: Request) {
   }
 
   const validTargetTypes: TargetType[] = ['post', 'reel', 'comment']
-  const validTypes: ReactionType[] = ['like', 'dislike']
+  const validTypes: ReactionType[] = ['like', 'dislike', 'emoji']
 
   if (!validTargetTypes.includes(targetType) || !validTypes.includes(type)) {
     return NextResponse.json(
@@ -56,8 +60,25 @@ export async function POST(request: Request) {
     )
   }
 
-  const reactionKey = `${user.id}:${targetType}:${targetId}`
+  const standardEmojis = ['❤️', '😂', '😮', '😢', '🔥']
+
+  if (type === 'emoji' && !standardEmojis.includes(emoji)) {
+    return NextResponse.json({ message: 'Emoji invalido.' }, { status: 400 })
+  }
+
+  const targetIdValue = String(targetId)
+  const reactionKey = `${user.id}:${targetType}:${targetIdValue}`
   const p = payload as any
+
+  async function getPostReactionDetails() {
+    if (targetType !== 'post') return null
+    const [details] = await enrichPostsWithSocialDetails(
+      p,
+      { id: authenticatedUser.id as string | number },
+      [{ id: targetIdValue }],
+    )
+    return details
+  }
 
   // Find existing reaction by the unique key
   const existing = await p.find({
@@ -73,25 +94,25 @@ export async function POST(request: Request) {
   if (existing.docs.length > 0) {
     const reaction = existing.docs[0]
 
-    if (reaction.type === type) {
+    if (reaction.type === type && (type !== 'emoji' || reaction.emoji === emoji)) {
       await p.delete({
         collection: 'reactions',
         id: reaction.id,
         overrideAccess: false,
         user,
       })
-      return NextResponse.json({ action: 'removed', type })
+      return NextResponse.json({ action: 'removed', type, details: await getPostReactionDetails() })
     }
 
     // Switch type: like → dislike or vice-versa
     await p.update({
       collection: 'reactions',
       id: reaction.id,
-      data: { type },
+      data: { type, emoji: type === 'emoji' ? emoji : null },
       overrideAccess: false,
       user,
     })
-    return NextResponse.json({ action: 'changed', type })
+    return NextResponse.json({ action: 'changed', type, details: await getPostReactionDetails() })
   }
 
   // No existing reaction — create it
@@ -100,12 +121,13 @@ export async function POST(request: Request) {
     data: {
       user: user.id,
       type,
+      emoji: type === 'emoji' ? emoji : null,
       targetType,
-      targetId: String(targetId),
+      targetId: targetIdValue,
     },
     overrideAccess: false,
     user,
   })
 
-  return NextResponse.json({ action: 'added', type })
+  return NextResponse.json({ action: 'added', type, details: await getPostReactionDetails() })
 }

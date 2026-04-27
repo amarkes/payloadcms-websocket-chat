@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import PostCard, { type PostData } from './PostCard'
+import PostCard, { type PostData, type PostReactionChoice } from './PostCard'
 
 interface FeedScrollerProps {
   initialDocs: PostData[]
@@ -9,7 +9,7 @@ interface FeedScrollerProps {
   initialPage: number
   feedUrl: string
   currentUserId: number | null
-  initialUserReactions?: Record<string, 'like' | 'dislike'>
+  initialUserReactions?: Record<string, PostReactionChoice | null>
 }
 
 export default function FeedScroller({

@@ -1,18 +1,36 @@
+import { Plus_Jakarta_Sans, Spline_Sans } from 'next/font/google'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages } from 'next-intl/server'
 import React from 'react'
 import './styles.css'
 
+const splineSans = Spline_Sans({
+  subsets: ['latin'],
+  variable: '--font-headline',
+  display: 'swap',
+})
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+})
+
 export const metadata = {
-  description: 'A blank template using Payload in a Next.js app.',
-  title: 'Payload Blank Template',
+  description: 'VibeStream — sua rede social.',
+  title: 'VibeStream',
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
+  const messages = await getMessages()
 
   return (
-    <html lang="en">
+    <html lang="pt" className={`${splineSans.variable} ${plusJakartaSans.variable}`}>
       <body>
-        <main>{children}</main>
+        <NextIntlClientProvider messages={messages}>
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   )

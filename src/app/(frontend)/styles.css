@@ -1,3 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  /* Electric Noir — Design System Colors */
+  --color-primary: #00F0FF;
+  --color-primary-dark: #003d40;
+  --color-primary-mid: #007a80;
+  --color-primary-light: #80f7ff;
+
+  --color-secondary: #BC13FE;
+  --color-secondary-dark: #2e0040;
+  --color-secondary-mid: #7a0ca8;
+  --color-secondary-light: #e589ff;
+
+  --color-tertiary: #7000FF;
+  --color-tertiary-dark: #1a0040;
+  --color-tertiary-mid: #4500a8;
+  --color-tertiary-light: #b380ff;
+
+  --color-neutral: #0A0A0C;
+  --color-neutral-100: #0a0a0c;
+  --color-neutral-200: #141416;
+  --color-neutral-300: #1e1e22;
+  --color-neutral-400: #2a2a30;
+  --color-neutral-500: #5a5a66;
+  --color-neutral-600: #8a8a99;
+  --color-neutral-700: #b8b8c8;
+  --color-neutral-800: #e0e0ec;
+  --color-neutral-900: #f5f5fa;
+
+  /* Typography */
+  --font-headline: var(--font-headline), 'Spline Sans', sans-serif;
+  --font-body: var(--font-body), 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+}
+
 :root {
   --font-mono: 'Roboto Mono', monospace;
 }
@@ -10,7 +46,7 @@ html {
   font-size: 18px;
   line-height: 32px;
 
-  background: rgb(0, 0, 0);
+  background: var(--color-neutral);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -21,12 +57,12 @@ body,
 }
 
 body {
-  font-family: system-ui;
+  font-family: var(--font-body);
   font-size: 18px;
   line-height: 32px;
 
   margin: 0;
-  color: rgb(1000, 1000, 1000);
+  color: var(--color-neutral-900);
 
   @media (max-width: 1024px) {
     font-size: 15px;
@@ -45,6 +81,7 @@ h1 {
   font-size: 64px;
   line-height: 70px;
   font-weight: bold;
+  font-family: var(--font-headline);
 
   @media (max-width: 1024px) {
     margin: 24px 0;
@@ -128,15 +165,15 @@ svg {
     }
 
     .admin {
-      color: rgb(0, 0, 0);
-      background: rgb(1000, 1000, 1000);
-      border: 1px solid rgb(0, 0, 0);
+      color: var(--color-neutral);
+      background: var(--color-primary);
+      border: 1px solid var(--color-primary);
     }
 
     .docs {
-      color: rgb(1000, 1000, 1000);
-      background: rgb(0, 0, 0);
-      border: 1px solid rgb(1000, 1000, 1000);
+      color: var(--color-primary);
+      background: var(--color-neutral);
+      border: 1px solid var(--color-primary);
     }
   }
 

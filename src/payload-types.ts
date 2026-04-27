@@ -77,6 +77,7 @@ export interface Config {
     reels: Reel;
     reactions: Reaction;
     comments: Comment;
+    notifications: Notification;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -94,6 +95,7 @@ export interface Config {
     reels: ReelsSelect<false> | ReelsSelect<true>;
     reactions: ReactionsSelect<false> | ReactionsSelect<true>;
     comments: CommentsSelect<false> | CommentsSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -329,7 +331,8 @@ export interface Reel {
 export interface Reaction {
   id: number;
   user: number | User;
-  type: 'like' | 'dislike';
+  type: 'like' | 'dislike' | 'emoji';
+  emoji?: string | null;
   targetType: 'post' | 'reel' | 'comment';
   targetId: string;
   reactionKey?: string | null;
@@ -353,6 +356,25 @@ export interface Comment {
    * Soft delete — preserva respostas filhas
    */
   isDeleted?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  recipient: number | User;
+  actor: number | User;
+  type: 'comment_mention';
+  post: number | Post;
+  comment: number | Comment;
+  href: string;
+  title: string;
+  body?: string | null;
+  notificationKey?: string | null;
+  readAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -419,6 +441,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'comments';
         value: number | Comment;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -627,6 +653,7 @@ export interface ReelsSelect<T extends boolean = true> {
 export interface ReactionsSelect<T extends boolean = true> {
   user?: T;
   type?: T;
+  emoji?: T;
   targetType?: T;
   targetId?: T;
   reactionKey?: T;
@@ -646,6 +673,24 @@ export interface CommentsSelect<T extends boolean = true> {
   likesCount?: T;
   dislikesCount?: T;
   isDeleted?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  recipient?: T;
+  actor?: T;
+  type?: T;
+  post?: T;
+  comment?: T;
+  href?: T;
+  title?: T;
+  body?: T;
+  notificationKey?: T;
+  readAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

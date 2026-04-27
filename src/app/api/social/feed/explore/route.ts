@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server'
-import { getPayloadClient } from '@/lib/chat-auth'
+import { getAuthenticatedUser } from '@/lib/chat-auth'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit')) || 10))
   const tag = searchParams.get('tag')?.trim().toLowerCase()
 
-  const payload = await getPayloadClient()
+  const { payload, user } = await getAuthenticatedUser()
   const p = payload as any
 
   const result = await p.find({
@@ -17,6 +17,7 @@ export async function GET(request: Request) {
       and: [
         { visibility: { equals: 'public' } },
         { isArchived: { equals: false } },
+        ...(user ? [{ author: { not_equals: user.id } }] : []),
         ...(tag ? [{ 'tags.tag': { equals: tag } }] : []),
       ],
     },

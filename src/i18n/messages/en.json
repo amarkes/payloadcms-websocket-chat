@@ -1,0 +1,146 @@
+{
+  "nav": {
+    "feed": "Feed",
+    "explore": "Explore",
+    "reels": "Reels",
+    "messages": "Messages",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "topbar": {
+    "newPost": "New post",
+    "notifications": "Notifications",
+    "searchPlaceholder": "Search..."
+  },
+  "composer": {
+    "placeholder": "Share your flow...",
+    "post": "Post",
+    "addImage": "Image",
+    "addVideo": "Video",
+    "addEmoji": "Emoji",
+    "addGif": "GIF",
+    "posting": "Posting...",
+    "errorEmpty": "Add a caption or media.",
+    "visibility": {
+      "public": "Public",
+      "followers": "Followers",
+      "private": "Private"
+    }
+  },
+  "trending": {
+    "title": "Trending Topics",
+    "showMore": "Show more",
+    "vibes": "Vibes"
+  },
+  "whoToFollow": {
+    "title": "Who to follow",
+    "follow": "Follow",
+    "following": "Following"
+  },
+  "feed": {
+    "emptyTitle": "Your feed is empty",
+    "emptyDescription": "Follow people to see posts here.",
+    "explore": "Explore posts",
+    "stories": "Active stories"
+  },
+  "post": {
+    "like": "Like",
+    "dislike": "Dislike",
+    "comment": "Comment",
+    "share": "Share",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "options": "Options",
+    "saving": "Saving...",
+    "deleting": "Deleting...",
+    "confirmDelete": "Delete this post?",
+    "cancel": "Cancel",
+    "errorSave": "Error saving.",
+    "errorDelete": "Error deleting."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Personalize your VibeStream experience and manage your security.",
+    "account": {
+      "title": "Account",
+      "profileIdentity": "Profile Identity",
+      "profileIdentitySub": "Edit your name, bio, and visual vibe",
+      "emailPhone": "Email & Phone"
+    },
+    "privacy": {
+      "title": "Privacy",
+      "incognito": "Incognito Mode",
+      "incognitoSub": "Hide your activity from friends and followers",
+      "interactionLimits": "Interaction Limits",
+      "interactionLimitsSub": "Allow comments from followers only"
+    },
+    "security": {
+      "title": "Security",
+      "password": "Password",
+      "passwordSub": "Last changed 2 months ago",
+      "twoFactor": "Two-Factor",
+      "twoFactorStatus": "Status: Active"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "push": "Push Notifications",
+      "streamAlerts": "Stream Alerts",
+      "directMessages": "Direct Messages"
+    },
+    "help": {
+      "title": "Help & Support",
+      "communityGuidelines": "Community Guidelines",
+      "reportBug": "Report a Bug",
+      "contactSupport": "Contact Support"
+    }
+  },
+  "explore": {
+    "title": "Explore",
+    "subtitle": "Discover what's trending on VibeStream",
+    "trendingCategories": "Trending Categories",
+    "viewAll": "View all",
+    "forYou": "For You",
+    "searchPlaceholder": "Search hashtag, e.g.: design",
+    "search": "Search",
+    "resultsFor": "Results for",
+    "activeVibes": "active vibes",
+    "dailyCreators": "daily creators",
+    "newInnovations": "new innovations"
+  },
+  "reels": {
+    "title": "Reels",
+    "subtitle": "Short videos with real-time reactions",
+    "empty": "No reels available right now.",
+    "follow": "Follow",
+    "share": "Share",
+    "navigatePrev": "Previous",
+    "navigateNext": "Next"
+  },
+  "profile": {
+    "posts": "Posts",
+    "reels": "Reels",
+    "tagged": "Tagged",
+    "followers": "Followers",
+    "following": "Following",
+    "editProfile": "Edit profile",
+    "follow": "Follow",
+    "message": "Message",
+    "privateAccount": "Private account",
+    "privateAccountSub": "Follow this user to see their content.",
+    "noPostsYet": "No posts yet.",
+    "noReelsYet": "No reels yet.",
+    "viewAll": "View all",
+    "stories": "Active stories",
+    "joinedAt": "Joined"
+  },
+  "messages": {
+    "title": "Chats",
+    "newConversation": "New conversation",
+    "searchPlaceholder": "Search conversations...",
+    "selectConversation": "Select a conversation",
+    "selectConversationSub": "Choose a conversation on the left to start messaging.",
+    "online": "Online",
+    "yesterday": "Yesterday"
+  }
+}

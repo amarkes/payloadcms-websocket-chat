@@ -1,15 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import Link from 'next/link'
 import { headers as getHeaders } from 'next/headers.js'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { getPayload } from 'payload'
+import { getTranslations } from 'next-intl/server'
 import config from '@/payload.config'
 import type { User } from '@/payload-types'
+import AppShell from '@/components/layout/AppShell'
+import PostComposer from '@/components/feed/PostComposer'
+import TrendingTopics from '@/components/widgets/TrendingTopics'
+import WhoToFollow from '@/components/widgets/WhoToFollow'
 import FeedScroller from '@/components/social/FeedScroller'
 import SocialRealtimeBridge from '@/components/social/SocialRealtimeBridge'
 import StoriesRail from '@/components/social/StoriesRail'
 import type { PostData } from '@/components/social/PostCard'
+import { enrichPostsWithSocialDetails } from '@/lib/social-feed'
 import { getFeedStoryGroups } from '@/lib/social-stories'
 
 export default async function FeedPage() {
@@ -18,6 +24,8 @@ export default async function FeedPage() {
   const { user } = await payload.auth({ headers })
 
   if (!user) redirect('/')
+
+  const t = await getTranslations('feed')
 
   const p = payload as any
 
@@ -36,15 +44,18 @@ export default async function FeedPage() {
     return typeof value === 'object' && value !== null ? value.id : value
   })
 
+  // Include own posts in the feed
+  const feedAuthorIds = [user.id, ...followingIds]
+
   let initialDocs: PostData[] = []
   let initialTotalPages = 0
-  const userReactions: Record<string, 'like' | 'dislike'> = {}
+  const userReactions: Record<string, NonNullable<PostData['currentUserReaction']> | null> = {}
 
-  if (followingIds.length > 0) {
+  {
     const postsResult = await p.find({
       collection: 'posts',
       where: {
-        and: [{ author: { in: followingIds } }, { isArchived: { equals: false } }],
+        and: [{ author: { in: feedAuthorIds } }, { isArchived: { equals: false } }],
       },
       sort: '-createdAt',
       depth: 1,
@@ -54,27 +65,12 @@ export default async function FeedPage() {
       user,
     })
 
-    initialDocs = postsResult.docs as PostData[]
+    initialDocs = await enrichPostsWithSocialDetails(p, user, postsResult.docs as PostData[])
     initialTotalPages = postsResult.totalPages
 
     if (initialDocs.length > 0) {
-      const postIds = initialDocs.map((doc) => String(doc.id))
-      const reactionsResult = await p.find({
-        collection: 'reactions',
-        where: {
-          and: [
-            { user: { equals: user.id } },
-            { targetType: { equals: 'post' } },
-            { targetId: { in: postIds } },
-          ],
-        },
-        overrideAccess: true,
-        depth: 0,
-        limit: postIds.length,
-      })
-
-      for (const reaction of reactionsResult.docs) {
-        userReactions[String(reaction.targetId)] = reaction.type as 'like' | 'dislike'
+      for (const post of initialDocs) {
+        userReactions[String(post.id)] = post.currentUserReaction ?? null
       }
     }
   }
@@ -84,114 +80,55 @@ export default async function FeedPage() {
   const fullUser = (await payload.findByID({
     collection: 'users',
     id: user.id,
-    depth: 0,
+    depth: 1,
     overrideAccess: true,
-  })) as User & { username?: string | null }
+  })) as User & { username?: string | null; avatar?: { filename?: string | null } | null }
+
+  const avatarUrl = fullUser.avatar?.filename
+    ? `/api/media/file/${fullUser.avatar.filename}`
+    : null
+
+  const rightPanel = (
+    <>
+      <TrendingTopics />
+      <WhoToFollow currentUserId={user.id} followingIds={followingIds} />
+    </>
+  )
 
   return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        background:
-          'radial-gradient(circle at top, rgba(31, 122, 236, 0.10), transparent 30%), #05070d',
-        color: '#f5f7fb',
-        fontFamily: 'sans-serif',
-      }}
+    <AppShell
+      username={fullUser.username ?? user.email}
+      avatarUrl={avatarUrl}
+      rightPanel={rightPanel}
     >
       <SocialRealtimeBridge />
 
-      <div
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 20,
-          background: 'rgba(5, 7, 13, 0.92)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid #1f2a3a',
-          padding: '0 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          height: 56,
-        }}
-      >
-        <Link href="/" style={{ color: '#f5f7fb', textDecoration: 'none', fontWeight: 700, fontSize: 18 }}>
-          ◎
-        </Link>
-        <Link href="/feed" style={{ color: '#0070f3', textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>
-          Feed
-        </Link>
-        <Link href="/explore" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 14 }}>
-          Explorar
-        </Link>
-        <Link href="/reels" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 14 }}>
-          Reels
-        </Link>
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+      <PostComposer avatarUrl={avatarUrl} username={fullUser.username ?? user.email} />
+
+      {storyGroups.length > 0 && (
+        <StoriesRail groups={storyGroups} title={t('stories')} />
+      )}
+
+      <FeedScroller
+        feedUrl="/api/social/feed"
+        initialDocs={initialDocs}
+        initialTotalPages={initialTotalPages}
+        initialPage={1}
+        currentUserId={Number(user.id)}
+        initialUserReactions={userReactions}
+      />
+
+      {initialDocs.length === 0 && (
+        <div className="flex flex-col items-center justify-center text-center py-16">
+          <p className="text-neutral-600 text-base mb-4">{t('emptyDescription')}</p>
           <Link
-            href="/feed/new"
-            style={{
-              padding: '7px 14px',
-              borderRadius: 10,
-              background: '#0070f3',
-              color: '#fff',
-              textDecoration: 'none',
-              fontSize: 13,
-              fontWeight: 600,
-            }}
+            href="/explore"
+            className="inline-block px-6 py-2.5 bg-primary text-neutral rounded-full font-semibold text-sm hover:opacity-90 transition-opacity"
           >
-            + Novo post
-          </Link>
-          <Link
-            href={`/u/${fullUser.username || user.email}`}
-            style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 13 }}
-          >
-            Meu perfil
-          </Link>
-          <Link
-            href="/settings/profile"
-            style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 13 }}
-          >
-            Configuracoes
+            {t('explore')}
           </Link>
         </div>
-      </div>
-
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px 16px 48px' }}>
-        <StoriesRail groups={storyGroups} title="Stories ativas" />
-
-        {followingIds.length === 0 ? (
-          <div style={{ textAlign: 'center', paddingTop: 60 }}>
-            <p style={{ color: '#94a3b8', fontSize: 16, marginBottom: 16 }}>
-              Voce ainda nao segue ninguem.
-            </p>
-            <Link
-              href="/explore"
-              style={{
-                display: 'inline-block',
-                padding: '10px 24px',
-                background: '#0070f3',
-                color: '#fff',
-                borderRadius: 999,
-                textDecoration: 'none',
-                fontWeight: 600,
-                fontSize: 14,
-              }}
-            >
-              Explorar posts
-            </Link>
-          </div>
-        ) : (
-          <FeedScroller
-            feedUrl="/api/social/feed"
-            initialDocs={initialDocs}
-            initialTotalPages={initialTotalPages}
-            initialPage={1}
-            currentUserId={Number(user.id)}
-            initialUserReactions={userReactions}
-          />
-        )}
-      </div>
-    </div>
+      )}
+    </AppShell>
   )
 }

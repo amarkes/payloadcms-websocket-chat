@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/chat-auth'
+import { enrichPostsWithSocialDetails } from '@/lib/social-feed'
 
 export async function GET(request: Request) {
   const { payload, user } = await getAuthenticatedUser()
@@ -33,15 +34,13 @@ export async function GET(request: Request) {
     return typeof v === 'object' && v !== null ? v.id : v
   })
 
-  if (followingIds.length === 0) {
-    return NextResponse.json({ docs: [], totalDocs: 0, totalPages: 0, page: 1, hasNextPage: false })
-  }
+  const feedAuthorIds = [user.id, ...followingIds]
 
   const postsResult = await p.find({
     collection: 'posts',
     where: {
       and: [
-        { author: { in: followingIds } },
+        { author: { in: feedAuthorIds } },
         { isArchived: { equals: false } },
       ],
     },
@@ -52,6 +51,8 @@ export async function GET(request: Request) {
     overrideAccess: false,
     user,
   })
+
+  postsResult.docs = await enrichPostsWithSocialDetails(p, user, postsResult.docs)
 
   return NextResponse.json(postsResult)
 }

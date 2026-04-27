@@ -1,16 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { headers as getHeaders } from 'next/headers.js'
 import { getPayload } from 'payload'
+import { getTranslations } from 'next-intl/server'
 import config from '@/payload.config'
+import type { User, Media } from '@/payload-types'
+import AppShell from '@/components/layout/AppShell'
 import FeedScroller from '@/components/social/FeedScroller'
-import type { PostData } from '@/components/social/PostCard'
 import SocialRealtimeBridge from '@/components/social/SocialRealtimeBridge'
+import TrendingTopics from '@/components/widgets/TrendingTopics'
+import type { PostData } from '@/components/social/PostCard'
 
 interface ExplorePageProps {
   searchParams: Promise<{ tag?: string }>
 }
+
+const CATEGORIES = [
+  { label: 'Música', slug: 'music', stat: '4.2k', statKey: 'activeVibes' as const, color: 'from-amber-600 to-orange-500', emoji: '🎵' },
+  { label: 'Arte', slug: 'art', stat: '2.6k', statKey: 'dailyCreators' as const, color: 'from-purple-600 to-pink-500', emoji: '🎨' },
+  { label: 'Tech', slug: 'tech', stat: '1.5k', statKey: 'newInnovations' as const, color: 'from-cyan-600 to-blue-500', emoji: '💻' },
+  { label: 'Design', slug: 'design', stat: '3.1k', statKey: 'activeVibes' as const, color: 'from-teal-600 to-green-500', emoji: '✏️' },
+]
 
 export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   const { tag } = await searchParams
@@ -19,6 +31,21 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   const payload = await getPayload({ config: await config })
   const headers = await getHeaders()
   const { user } = await payload.auth({ headers })
+  const t = await getTranslations('explore')
+
+  const fullUser = user
+    ? ((await payload.findByID({
+        collection: 'users',
+        id: user.id,
+        depth: 1,
+        overrideAccess: true,
+      })) as User & { username?: string | null; avatar?: { filename?: string | null } | null })
+    : null
+
+  const avatarUrl = fullUser?.avatar?.filename
+    ? `/api/media/file/${fullUser.avatar.filename}`
+    : null
+
   const p = payload as any
 
   const postsResult = await p.find({
@@ -27,231 +54,108 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
       and: [
         { visibility: { equals: 'public' } },
         { isArchived: { equals: false } },
+        ...(user ? [{ author: { not_equals: user.id } }] : []),
         ...(normalizedTag ? [{ 'tags.tag': { equals: normalizedTag } }] : []),
       ],
     },
     sort: '-createdAt',
     depth: 1,
     page: 1,
-    limit: 10,
+    limit: 12,
     overrideAccess: true,
   })
 
-  const featuredReels = await p.find({
-    collection: 'reels',
-    where: {
-      visibility: {
-        equals: 'public',
-      },
-    },
-    sort: '-likesCount',
-    depth: 1,
-    limit: 4,
-    overrideAccess: true,
-  })
+  const rightPanel = <TrendingTopics />
 
   return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        background:
-          'radial-gradient(circle at top, rgba(31, 122, 236, 0.10), transparent 30%), #05070d',
-        color: '#f5f7fb',
-        fontFamily: 'sans-serif',
-      }}
+    <AppShell
+      username={fullUser?.username ?? user?.email}
+      avatarUrl={avatarUrl}
+      rightPanel={rightPanel}
     >
       <SocialRealtimeBridge />
 
-      <div
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 20,
-          background: 'rgba(5, 7, 13, 0.92)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid #1f2a3a',
-          padding: '0 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          height: 56,
-        }}
-      >
-        <Link href="/" style={{ color: '#f5f7fb', textDecoration: 'none', fontWeight: 700, fontSize: 18 }}>
-          ◎
-        </Link>
-        <Link href="/feed" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 14 }}>
-          Feed
-        </Link>
-        <Link href="/explore" style={{ color: '#0070f3', textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>
-          Explorar
-        </Link>
-        <Link href="/reels" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 14 }}>
-          Reels
-        </Link>
-        {user && (
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
-            <Link
-              href="/feed/new"
-              style={{
-                padding: '7px 14px',
-                borderRadius: 10,
-                background: '#0070f3',
-                color: '#fff',
-                textDecoration: 'none',
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              + Novo post
-            </Link>
-          </div>
-        )}
+      {/* Header */}
+      <div className="mb-6">
+        <h1
+          className="text-2xl font-bold text-neutral-900 mb-1"
+          style={{ fontFamily: 'var(--font-headline)' }}
+        >
+          {t('title')}
+        </h1>
+        <p className="text-sm text-neutral-500">{t('subtitle')}</p>
       </div>
 
-      <div style={{ maxWidth: 920, margin: '0 auto', padding: '24px 16px 48px' }}>
-        <div
-          style={{
-            display: 'grid',
-            gap: 20,
-            gridTemplateColumns: 'minmax(0, 1fr)',
-          }}
+      {/* Search */}
+      <form action="/explore" method="get" className="flex gap-2 mb-6">
+        <input
+          type="text"
+          name="tag"
+          defaultValue={normalizedTag}
+          placeholder={t('searchPlaceholder')}
+          className="flex-1 h-11 rounded-xl border border-neutral-300/20 bg-neutral-200 text-neutral-800 placeholder-neutral-500 px-4 text-sm outline-none focus:border-primary/40 transition-colors"
+        />
+        <button
+          type="submit"
+          className="px-5 h-11 rounded-xl bg-primary text-neutral font-semibold text-sm hover:opacity-90 transition-opacity"
         >
-          <section
-            style={{
-              padding: 24,
-              borderRadius: 24,
-              border: '1px solid rgba(148, 163, 184, 0.14)',
-              background: 'rgba(7, 11, 19, 0.9)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 16 }}>
-              <div>
-                <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>Explorar</h1>
-                <p style={{ margin: '6px 0 0', color: '#94a3b8', fontSize: 14 }}>
-                  Descubra posts públicos e pesquise por hashtag.
-                </p>
-              </div>
-              <Link href="/reels" style={{ color: '#60a5fa', textDecoration: 'none', fontSize: 14 }}>
-                Ver reels
-              </Link>
-            </div>
+          {t('search')}
+        </button>
+      </form>
 
-            <form action="/explore" method="get" style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-              <input
-                type="text"
-                name="tag"
-                defaultValue={normalizedTag}
-                placeholder="Buscar hashtag, ex: design"
-                style={{
-                  flex: 1,
-                  height: 46,
-                  borderRadius: 14,
-                  border: '1px solid #243041',
-                  background: '#0f1724',
-                  color: '#f8fafc',
-                  padding: '0 14px',
-                  fontSize: 14,
-                }}
-              />
-              <button
-                type="submit"
-                style={{
-                  minWidth: 120,
-                  borderRadius: 14,
-                  border: 'none',
-                  background: '#1d4ed8',
-                  color: '#fff',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
+      {/* Trending Categories */}
+      {!normalizedTag && (
+        <section className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-neutral-700">{t('trendingCategories')}</h2>
+            <button className="text-xs text-primary hover:underline">{t('viewAll')}</button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {CATEGORIES.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/explore?tag=${cat.slug}`}
+                className="group relative overflow-hidden rounded-2xl aspect-video flex flex-col justify-end p-3 border border-neutral-300/20 hover:border-primary/30 transition-colors"
               >
-                Buscar
-              </button>
-            </form>
+                <div className={`absolute inset-0 bg-linear-to-br ${cat.color} opacity-70`} />
+                <div className="absolute inset-0 bg-neutral-900/40" />
+                <div className="relative z-10">
+                  <div className="text-lg mb-0.5">{cat.emoji}</div>
+                  <p className="text-sm font-bold text-white leading-tight">{cat.label}</p>
+                  <p className="text-[10px] text-white/70 mt-0.5">
+                    {cat.stat} {t(cat.statKey)}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
-            {normalizedTag && (
-              <div style={{ marginBottom: 18, color: '#cbd5e1', fontSize: 13 }}>
-                Resultados para <strong>#{normalizedTag}</strong>
-              </div>
-            )}
-
-            <FeedScroller
-              feedUrl={`/api/social/feed/explore${normalizedTag ? `?tag=${encodeURIComponent(normalizedTag)}` : ''}`}
-              initialDocs={postsResult.docs as PostData[]}
-              initialTotalPages={postsResult.totalPages as number}
-              initialPage={1}
-              currentUserId={user ? Number(user.id) : null}
-            />
-          </section>
-
-          {featuredReels.docs.length > 0 && (
-            <section
-              style={{
-                padding: 20,
-                borderRadius: 24,
-                border: '1px solid rgba(148, 163, 184, 0.14)',
-                background: 'rgba(7, 11, 19, 0.9)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Reels em alta</h2>
-                <Link href="/reels" style={{ color: '#60a5fa', textDecoration: 'none', fontSize: 13 }}>
-                  Abrir página
-                </Link>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-                {featuredReels.docs.map((reel: any) => (
-                  <Link
-                    key={reel.id}
-                    href={`/reels${reel.author?.username ? `?username=${reel.author.username}` : ''}`}
-                    style={{
-                      position: 'relative',
-                      minHeight: 220,
-                      borderRadius: 20,
-                      overflow: 'hidden',
-                      textDecoration: 'none',
-                      background: '#0f172a',
-                      color: '#fff',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                    }}
-                  >
-                    {reel.thumbnail?.filename ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={`/api/media/file/${reel.thumbnail.filename}`}
-                        alt={reel.caption || 'Reel'}
-                        style={{ width: '100%', height: 220, objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div style={{ width: '100%', height: 220, background: 'linear-gradient(135deg, #1d4ed8, #22d3ee)' }} />
-                    )}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.74))',
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        padding: 14,
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: 12, color: '#cbd5e1', marginBottom: 4 }}>
-                          @{reel.author?.username || reel.author?.email}
-                        </div>
-                        <div style={{ fontWeight: 700, lineHeight: 1.4 }}>
-                          {reel.caption || 'Assistir reel'}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
+      {/* For You / Results */}
+      <section>
+        <div className="flex items-center gap-2 mb-3">
+          {normalizedTag ? (
+            <>
+              <span className="text-sm text-neutral-500">{t('resultsFor')}</span>
+              <span className="text-sm font-semibold text-primary">#{normalizedTag}</span>
+            </>
+          ) : (
+            <h2 className="text-sm font-semibold text-neutral-700">
+              <span className="mr-1.5">✦</span>
+              {t('forYou')}
+            </h2>
           )}
         </div>
-      </div>
-    </div>
+
+        <FeedScroller
+          feedUrl={`/api/social/feed/explore${normalizedTag ? `?tag=${encodeURIComponent(normalizedTag)}` : ''}`}
+          initialDocs={postsResult.docs as PostData[]}
+          initialTotalPages={postsResult.totalPages as number}
+          initialPage={1}
+          currentUserId={user ? Number(user.id) : null}
+        />
+      </section>
+    </AppShell>
   )
 }
